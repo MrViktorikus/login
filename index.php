@@ -9,8 +9,27 @@ $dbm = new PDO('mysql:dbname=' . DB_NAME . ';host=' . DB_SERVER . ';charset=utf8
 
 session_start();
 //kolla om inloggad
-if (isset($_SESSION["login"])) {
+
+if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 10)) {
+    // last request was more than 30 minutes ago
+    session_unset();     // unset $_SESSION variable for the run-time 
+    session_destroy();   // destroy session data in storage
+}
+$_SESSION['LAST_ACTIVITY'] = time();
+
+if (isset($_POST["action"])) {
     echo "Logged in";
+    
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+    var_dump($password . $username);
+    
+    //skapa session för login
+    $_SESSION["login"] = "SELECT * FROM login WHERE name='$username' and password='$password'";
+    echo $_SESSION["login"];
+    
+    $check2 = mysql_num_rows($check);
+    
 } else {
 
 
@@ -25,9 +44,7 @@ if (isset($_SESSION["login"])) {
     $login = $stmt->fetchAll();
     var_dump($login);
 
-    //skapa session för login
-    $_SESSION["login"] = "SELECT * FROM login WHERE username='$username' and password='$password'";
-    echo $_SESSION["login"];
+    
 }
 
 
