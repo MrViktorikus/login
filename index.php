@@ -1,55 +1,51 @@
-
 <?php
+
+session_start();
+
 define("DB_SERVER", "localhost");
 define("DB_USER", "root");
 define("DB_PASSWORD", "");
 define("DB_NAME", "logindb");
 
-$dbm = new PDO('mysql:dbname=' . DB_NAME . ';host=' . DB_SERVER . ';charset=utf8', DB_USER, DB_PASSWORD);
+$dsn = 'mysql:dbname=' . DB_NAME . ';host=' . DB_SERVER . ';charset=utf8';
 
-session_start();
-//kolla om inloggad
+$attributes = array(PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC);
 
-if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 10)) {
-    // last request was more than 30 minutes ago
-    session_unset();     // unset $_SESSION variable for the run-time 
-    session_destroy();   // destroy session data in storage
+$dbh = new PDO($dsn, DB_USER, DB_PASSWORD, $attributes);
+
+
+if(($_SESSION["user"])===NULL){
+    echo "Var vänlig och logga in!";
+}else{
+    echo "Välkommen";
 }
-$_SESSION['LAST_ACTIVITY'] = time();
+
 
 if (isset($_POST["action"])) {
-    echo "Logged in";
-    
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    var_dump($password . $username);
-    
-    //skapa session för login
-    $_SESSION["login"] = "SELECT * FROM login WHERE name='$username' and password='$password'";
-    echo $_SESSION["login"];
-    
-    $check2 = mysql_num_rows($check);
-    
-} else {
 
+    $username = filter_input(INPUT_POST, "username", FILTER_SANITIZE_SPECIAL_CHARS);
+    $password = filter_input(INPUT_POST, "password", FILTER_SANITIZE_SPECIAL_CHARS);
+//    var_dump($password . " " . $username);
 
-    
-    
-    $sql = "SELECT * FROM login";
-
-    $stmt = $dbm->prepare($sql);
-
+    $sql = "SELECT username FROM login WHERE username = :username AND password= :password";
+    $stmt = $dbh->prepare($sql);
+    $stmt->bindParam(":username", $username);
+    $stmt->bindParam(":password", $password);
     $stmt->execute();
 
     $login = $stmt->fetchAll();
-    var_dump($login);
 
+    //var_dump($login);
     
-}
-
-
-if (isset($_POST["action"])) {
-    
+    if($login != NULL){
+        echo "<br>";
+        echo "Du är inloggad!";
+        $_SESSION["user"] = $username;
+    }else{
+        echo "<br>";
+        echo "Var vänlig försök igen.";
+        $_SESSION["user"] = null;
+    }
 }
 ?>
 
